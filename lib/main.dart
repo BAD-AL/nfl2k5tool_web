@@ -32,6 +32,10 @@ late TeamDataEditorScreen teamDataEditorScreen;
 void main() {
   appState = AppState();
 
+  // Stamp version into the status bar
+  (document.getElementById('status-version') as HTMLElement?)
+      ?.textContent = 'NFL2K5Tool Web v$appVersion';
+
   // Restore persisted state
   _restoreTheme();
   _restoreRailCollapsed();

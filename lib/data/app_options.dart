@@ -1,5 +1,8 @@
 import 'package:web/web.dart' show window;
 
+/// Application version string — update this when releasing a new build.
+const String appVersion = '1.0.1';
+
 /// Persistent user options, stored in localStorage.
 class AppOptions {
   // Text View section
