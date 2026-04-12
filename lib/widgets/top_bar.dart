@@ -3,11 +3,11 @@ import 'package:web/web.dart';
 import '../app_state.dart';
 
 const _otherLinks = [
+  ('NFL2K4 Tool (web)',        'https://bad-al.github.io/nfl2k4tool_web/'),
   ('PS2 Memory Card Manager',  'https://bad-al.github.io/mymc_web/'),
   ('XBOX Memory Card Manager', 'https://bad-al.github.io/xbmut_web/'),
   ('Game Faqs saves',          'https://gamefaqs.gamespot.com/ps2/919830-espn-nfl-2k5/saves'),
-  ('NFL2K4 Tool',              'https://github.com/BAD-AL/nfl2k4tool_dart'),
-  ('Operation Sports link',    'Forum: https://forums.operationsports.com/forums/espn-nfl-2k5-football/881901-nfl2k5tool.html'),
+  ('Operation Sports link',    'https://forums.operationsports.com/forums/espn-nfl-2k5-football/881901-nfl2k5tool.html'),
   ('PS2 Emulator',             'https://pcsx2.net/'),
   ('OG XBOX Emulator',         'https://xemu.app/'),
 ];
