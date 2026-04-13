@@ -1984,6 +1984,14 @@ body {
   text-align: center;
 }
 
+body.drag-over .placeholder-screen {
+  color: var(--color-gold);
+  outline: 2px dashed var(--color-gold);
+  outline-offset: -16px;
+  border-radius: 8px;
+  background: rgba(201, 162, 39, 0.08);
+}
+
 /* Dividers */
 .divider {
   height: 1px;

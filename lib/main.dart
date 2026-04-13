@@ -67,6 +67,9 @@ void main() {
   // Register global re-render listener
   appState.addListener(_renderAll);
 
+  // Wire drag-and-drop file loading
+  _wireDragDrop();
+
   // Initial render
   _renderAll();
 
@@ -135,6 +138,45 @@ void _restoreTheme() {
 void _restoreRailCollapsed() {
   final saved = window.localStorage.getItem('railCollapsed');
   if (saved == 'true') appState.railCollapsed = true;
+}
+
+// ─── Drag & Drop ─────────────────────────────────────────────────────────────
+
+int _dragDepth = 0;
+
+void _wireDragDrop() {
+  document.addEventListener('dragenter', (Event e) {
+    e.preventDefault();
+    _dragDepth++;
+    document.body?.classList.add('drag-over');
+  }.toJS);
+
+  document.addEventListener('dragover', (Event e) {
+    e.preventDefault();
+    (e as DragEvent).dataTransfer?.dropEffect = 'copy';
+  }.toJS);
+
+  document.addEventListener('dragleave', (Event e) {
+    _dragDepth--;
+    if (_dragDepth <= 0) {
+      _dragDepth = 0;
+      document.body?.classList.remove('drag-over');
+    }
+  }.toJS);
+
+  document.addEventListener('drop', (Event e) {
+    e.preventDefault();
+    _dragDepth = 0;
+    document.body?.classList.remove('drag-over');
+    final file = (e as DragEvent).dataTransfer?.files?.item(0);
+    if (file == null) return;
+    file.arrayBuffer().toDart.then((buffer) {
+      final bytes = Uint8List.view(buffer.toDart);
+      _loadBytes(bytes, file.name);
+    }).catchError((Object err) {
+      statusBar.showMessage('Error reading file: $err');
+    });
+  }.toJS);
 }
 
 // ─── File Open ────────────────────────────────────────────────────────────────
