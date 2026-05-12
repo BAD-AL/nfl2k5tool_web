@@ -3,6 +3,7 @@ import 'package:web/web.dart';
 import '../app_state.dart';
 
 const _otherLinks = [
+  ('Older version (1.0.1)',    'https://bad-al.github.io/nfl2k5tool_web/v1.0.1/'),
   ('NFL2K4 Tool (web)',        'https://bad-al.github.io/nfl2k4tool_web/'),
   ('PS2 Memory Card Manager',  'https://bad-al.github.io/mymc_web/'),
   ('XBOX Memory Card Manager', 'https://bad-al.github.io/xbmut_web/'),

@@ -72,8 +72,10 @@ class AppState {
       buf.write(t.GetTeamDataAll());
     }
     if (opts.showSchedule && t.saveType == SaveType.Franchise) {
+      SchedulerHelper.showDateTime = opts.showScheduleDateTime;
       buf.write('\n\n#Schedule\n');
       buf.write(t.GetSchedule());
+      SchedulerHelper.showDateTime = false;
     }
     if (opts.autoUpdateDepthCharts) buf.write('\nAutoUpdateDepthChart');
     if (opts.autoUpdatePhotos) buf.write('\nAutoUpdatePhoto');

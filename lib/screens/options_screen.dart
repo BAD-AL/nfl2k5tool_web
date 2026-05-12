@@ -30,9 +30,10 @@ class OptionsScreen {
 
   <div class="options-card">
     <div class="options-card-title">Text View</div>
-    ${_row('showPlayers',      'Show Players',       o.showPlayers)}
-    ${_row('showSchedule',     'Show Schedule',      o.showSchedule)}
-    ${_row('showAttributes',   'Show Attributes',    o.showAttributes)}
+    ${_row('showPlayers',           'Show Players',            o.showPlayers)}
+    ${_row('showSchedule',          'Show Schedule',           o.showSchedule)}
+    ${_row('showScheduleDateTime',  'Show Schedule Date/Time', o.showScheduleDateTime)}
+    ${_row('showAttributes',        'Show Attributes',         o.showAttributes)}
     ${_row('showAppearance',   'Show Appearance',    o.showAppearance)}
     ${_row('showSpecialTeams', 'Show Special Teams', o.showSpecialTeams)}
     ${_row('showFreeAgents',   'Show Free Agents',   o.showFreeAgents)}
@@ -68,9 +69,9 @@ class OptionsScreen {
   // ─── Wiring ───────────────────────────────────────────────────────────────
 
   static const _textViewKeys = {
-    'showPlayers', 'showSchedule', 'showAttributes', 'showAppearance',
-    'showSpecialTeams', 'showFreeAgents', 'showDraftClass', 'showCoaches',
-    'showTeamData',
+    'showPlayers', 'showSchedule', 'showScheduleDateTime', 'showAttributes',
+    'showAppearance', 'showSpecialTeams', 'showFreeAgents', 'showDraftClass',
+    'showCoaches', 'showTeamData',
   };
 
   static const _autoUpdateKeys = {
@@ -156,6 +157,7 @@ class OptionsScreen {
     switch (key) {
       case 'showPlayers':           o.showPlayers = value;
       case 'showSchedule':          o.showSchedule = value;
+      case 'showScheduleDateTime':  o.showScheduleDateTime = value;
       case 'showAttributes':        o.showAttributes = value;
       case 'showAppearance':        o.showAppearance = value;
       case 'showSpecialTeams':      o.showSpecialTeams = value;

@@ -1,13 +1,14 @@
 import 'package:web/web.dart' show window;
 
 /// Application version string — update this when releasing a new build.
-const String appVersion = '1.0.1';
+const String appVersion = '1.0.2';
 
 /// Persistent user options, stored in localStorage.
 class AppOptions {
   // Text View section
   bool showPlayers;
   bool showSchedule;
+  bool showScheduleDateTime;
   bool showAppearance;
   bool showAttributes;
   bool showSpecialTeams;
@@ -25,6 +26,7 @@ class AppOptions {
   AppOptions({
     this.showPlayers = true,
     this.showSchedule = true,
+    this.showScheduleDateTime = false,
     this.showAppearance = true,
     this.showAttributes = true,
     this.showSpecialTeams = false,
@@ -45,6 +47,7 @@ class AppOptions {
     return AppOptions(
       showPlayers:           get('showPlayers', true),
       showSchedule:          get('showSchedule', true),
+      showScheduleDateTime:  get('showScheduleDateTime', false),
       showAppearance:        get('showAppearance', true),
       showAttributes:        get('showAttributes', true),
       showSpecialTeams:      get('showSpecialTeams', false),
@@ -63,6 +66,7 @@ class AppOptions {
     final s = window.localStorage;
     s.setItem('showPlayers',           showPlayers.toString());
     s.setItem('showSchedule',          showSchedule.toString());
+    s.setItem('showScheduleDateTime',  showScheduleDateTime.toString());
     s.setItem('showAppearance',        showAppearance.toString());
     s.setItem('showAttributes',        showAttributes.toString());
     s.setItem('showSpecialTeams',      showSpecialTeams.toString());

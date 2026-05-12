@@ -129,11 +129,18 @@ class ScheduleEditorScreen {
     }
 
     final week = schedule.weeks[_activeWeek];
+    final showDt = appState.options.showScheduleDateTime;
     final games = StringBuffer();
     for (int i = 0; i < week.games.length; i++) {
       final g = week.games[i];
       final awayAbbr = _esc(teamAbbr(g.away));
       final homeAbbr = _esc(teamAbbr(g.home));
+      final dtStr = _formatGameDt(g);
+      final dtBox = showDt ? '''
+  <div class="sch-datetime-box" data-week="${week.number}" data-game="$i">
+    <span class="sch-dt-label">Time</span>
+    <span class="sch-dt-value${dtStr.isEmpty ? ' empty' : ''}">${dtStr.isEmpty ? '—' : _esc(dtStr)}</span>
+  </div>''' : '';
       games.write('''
 <div class="sch-game-card">
   <div class="sch-team-box" data-week="${week.number}" data-game="$i" data-side="away">
@@ -146,7 +153,7 @@ class ScheduleEditorScreen {
     <span class="sch-team-label">Home</span>
     <span class="sch-team-abbr home-color">$homeAbbr</span>
     <span class="sch-team-name">${_esc(g.home)}</span>
-  </div>
+  </div>$dtBox
   <button class="sch-remove-btn" data-week="${week.number}" data-game="$i" title="Remove game">✕</button>
 </div>''');
     }
@@ -185,6 +192,34 @@ class ScheduleEditorScreen {
         final gameIdx = int.tryParse(rmBtn.dataset['game']) ?? 0;
         _applyScheduleEdit(
             removeGameFromText(appState.scheduleText ?? '', weekNum, gameIdx));
+        return;
+      }
+
+      // Datetime box click
+      final dtBox =
+          target?.closest('.sch-datetime-box') as HTMLElement?;
+      if (dtBox != null) {
+        final weekNum = int.tryParse(dtBox.dataset['week']) ?? 0;
+        final gameIdx = int.tryParse(dtBox.dataset['game']) ?? 0;
+        final schedule = _getSchedule();
+        ScheduleGame? game;
+        if (schedule != null) {
+          for (final w in schedule.weeks) {
+            if (w.number == weekNum && gameIdx < w.games.length) {
+              game = w.games[gameIdx];
+              break;
+            }
+          }
+        }
+        _openDateTimePicker(
+          currentDow: game?.dow,
+          currentHour: game?.hour,
+          currentMinute: game?.minute,
+          onApplied: (dow, hour, minute) {
+            _applyScheduleEdit(setGameDateTimeInText(
+                appState.scheduleText ?? '', weekNum, gameIdx, dow, hour, minute));
+          },
+        );
         return;
       }
 
@@ -424,6 +459,148 @@ class ScheduleEditorScreen {
       if (name.isEmpty) return;
       close();
       onPicked(name);
+    }.toJS);
+  }
+
+  // ─── Day/Time Picker ─────────────────────────────────────────────────────
+
+  static String _formatGameDt(ScheduleGame g) {
+    if (g.dow == null) return '';
+    final hr = g.hour ?? 0;
+    final min = g.minute ?? 0;
+    return '${g.dow!.toUpperCase()} $hr:${min.toString().padLeft(2, '0')}';
+  }
+
+  void _openDateTimePicker({
+    String? currentDow,
+    int? currentHour,
+    int? currentMinute,
+    required void Function(String dow, int hour, int minute) onApplied,
+  }) {
+    if (_pickerOverlay != null) return;
+
+    const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const presets = ['1:00', '4:05', '4:15', '4:25', '7:30', '8:15', '8:20'];
+
+    final dayBtns = List.generate(days.length, (i) {
+      final active = currentDow == days[i] ? ' active' : '';
+      return '<button class="sch-dt-day-btn$active" data-dow="${days[i]}">${dayLabels[i]}</button>';
+    }).join();
+
+    final currentTimeStr = (currentHour != null && currentMinute != null)
+        ? '$currentHour:${currentMinute.toString().padLeft(2, '0')}'
+        : '';
+
+    final presetBtns = presets.map((t) {
+      final active = t == currentTimeStr ? ' active' : '';
+      return '<button class="sch-dt-preset-btn$active" data-time="$t">$t</button>';
+    }).join();
+
+    final overlay = document.createElement('div') as HTMLElement;
+    overlay.className = 'dialog-overlay';
+    overlay.innerHTML = '''
+<div class="dialog sch-dt-dialog">
+  <div class="dialog-header">
+    <span>Set Day &amp; Time</span>
+    <span class="material-symbols-outlined dialog-close">close</span>
+  </div>
+  <div class="sch-dt-body">
+    <div class="sch-dt-section-label">Day of Week</div>
+    <div class="sch-dt-day-row">$dayBtns</div>
+    <div class="sch-dt-section-label">Time</div>
+    <div class="sch-dt-preset-row">$presetBtns</div>
+    <div class="sch-dt-custom-row">
+      <span class="sch-dt-custom-label">Custom:</span>
+      <input type="text" id="sch-dt-time-input" class="sch-dt-time-input"
+             placeholder="H:MM" value="${_esc(currentTimeStr)}">
+    </div>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn btn-outlined" id="sch-dt-cancel">Cancel</button>
+    <button class="btn btn-filled" id="sch-dt-apply">Apply</button>
+  </div>
+</div>'''.toJS;
+    document.body!.append(overlay);
+    _pickerOverlay = overlay;
+
+    void close() {
+      final fn = _pickerEscFn;
+      if (fn != null) document.removeEventListener('keydown', fn);
+      _pickerEscFn = null;
+      _pickerOverlay?.remove();
+      _pickerOverlay = null;
+    }
+
+    late final JSFunction escFn;
+    escFn = (Event e) {
+      if ((e as KeyboardEvent).key == 'Escape') close();
+    }.toJS;
+    document.addEventListener('keydown', escFn);
+    _pickerEscFn = escFn;
+
+    overlay.addEventListener('click', (Event e) {
+      if ((e.target as HTMLElement?) == overlay) close();
+    }.toJS);
+    (overlay.firstElementChild as HTMLElement?)
+        ?.addEventListener('click', (Event e) { e.stopPropagation(); }.toJS);
+
+    overlay.querySelector('.dialog-close')
+        ?.addEventListener('click', (Event _) { close(); }.toJS);
+
+    // Day button selection
+    overlay.querySelector('.sch-dt-day-row')?.addEventListener('click', (Event e) {
+      final btn = (e.target as HTMLElement?)?.closest('.sch-dt-day-btn') as HTMLElement?;
+      if (btn == null) return;
+      final allDayBtns = overlay.querySelector('.sch-dt-day-row')?.querySelectorAll('.sch-dt-day-btn');
+      if (allDayBtns != null) {
+        for (var i = 0; i < allDayBtns.length; i++) {
+          (allDayBtns.item(i) as HTMLElement?)?.classList.remove('active');
+        }
+      }
+      btn.classList.add('active');
+    }.toJS);
+
+    // Preset button selection — highlights button and fills the time input
+    overlay.querySelector('.sch-dt-preset-row')?.addEventListener('click', (Event e) {
+      final btn = (e.target as HTMLElement?)?.closest('.sch-dt-preset-btn') as HTMLElement?;
+      if (btn == null) return;
+      final allPresets = overlay.querySelector('.sch-dt-preset-row')?.querySelectorAll('.sch-dt-preset-btn');
+      if (allPresets != null) {
+        for (var i = 0; i < allPresets.length; i++) {
+          (allPresets.item(i) as HTMLElement?)?.classList.remove('active');
+        }
+      }
+      btn.classList.add('active');
+      final input = overlay.querySelector('#sch-dt-time-input') as HTMLInputElement?;
+      if (input != null) input.value = btn.dataset['time'];
+    }.toJS);
+
+    // Focusing the custom input clears preset selection
+    overlay.querySelector('#sch-dt-time-input')?.addEventListener('focus', (Event _) {
+      final allPresets = overlay.querySelector('.sch-dt-preset-row')?.querySelectorAll('.sch-dt-preset-btn');
+      if (allPresets != null) {
+        for (var i = 0; i < allPresets.length; i++) {
+          (allPresets.item(i) as HTMLElement?)?.classList.remove('active');
+        }
+      }
+    }.toJS);
+
+    overlay.querySelector('#sch-dt-cancel')
+        ?.addEventListener('click', (Event _) { close(); }.toJS);
+
+    overlay.querySelector('#sch-dt-apply')?.addEventListener('click', (Event _) {
+      final activeDayBtn = overlay.querySelector('.sch-dt-day-btn.active') as HTMLElement?;
+      final dow = activeDayBtn?.dataset['dow'] ?? '';
+      if (dow.isEmpty) return; // no day selected
+      final input = overlay.querySelector('#sch-dt-time-input') as HTMLInputElement?;
+      final timeStr = input?.value.trim() ?? '';
+      final parts = timeStr.split(':');
+      final hour = int.tryParse(parts.isNotEmpty ? parts[0] : '');
+      final minute = parts.length >= 2 ? (int.tryParse(parts[1]) ?? 0) : 0;
+      if (hour == null) return; // invalid time
+      close();
+      onApplied(dow, hour, minute);
     }.toJS);
   }
 

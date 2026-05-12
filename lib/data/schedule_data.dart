@@ -26,7 +26,11 @@ String teamAbbr(String name) =>
 class ScheduleGame {
   final String away; // lowercase full name, e.g. 'patriots'
   final String home;
-  const ScheduleGame({required this.away, required this.home});
+  final String? dow;    // e.g. 'sun' — present when showScheduleDateTime is on
+  final int? hour;      // display hour (12 = noon, not 0)
+  final int? minute;
+  const ScheduleGame({required this.away, required this.home,
+      this.dow, this.hour, this.minute});
 }
 
 class ScheduleWeek {
@@ -72,12 +76,18 @@ ScheduleDisplay parseScheduleForDisplay(String text) {
       continue;
     }
 
-    final gameMatch = RegExp(r'^(\w[\w\d]*(?:\s+\w+)*)\s+at\s+(\w[\w\d]*(?:\s+\w+)*)$',
-        caseSensitive: false).firstMatch(line);
+    // Team names are single words; optionally followed by dow and H:MM.
+    final gameMatch = RegExp(
+      r'^(\w[\w\d]*(?:\s+\w+)*)\s+at\s+(\w+)'
+      r'(?:\s+(sun|mon|tue|wed|thu|fri|sat)(?:\s+(\d{1,2}):(\d{2}))?)?',
+      caseSensitive: false).firstMatch(line);
     if (gameMatch != null && currentWeek != null) {
       games.add(ScheduleGame(
-        away: gameMatch.group(1)!.trim().toLowerCase(),
-        home: gameMatch.group(2)!.trim().toLowerCase(),
+        away:   gameMatch.group(1)!.trim().toLowerCase(),
+        home:   gameMatch.group(2)!.trim().toLowerCase(),
+        dow:    gameMatch.group(3)?.toLowerCase(),
+        hour:   int.tryParse(gameMatch.group(4) ?? ''),
+        minute: int.tryParse(gameMatch.group(5) ?? ''),
       ));
     }
   }
@@ -110,7 +120,11 @@ String setGameInText(
       if (lines[i].trim().isEmpty) continue;
       if (lines[i].trim().toLowerCase().contains(' at ')) {
         if (count == gameIndex) {
-          lines[i] = '$newAway at $newHome';
+          // Preserve any trailing datetime suffix (e.g. "  sun 4:15").
+          final m = RegExp(r'^\S+\s+at\s+\S+(.*)', caseSensitive: false)
+              .firstMatch(lines[i].trim());
+          final suffix = m?.group(1) ?? '';
+          lines[i] = '$newAway at $newHome$suffix';
           return lines.join('\n');
         }
         count++;
@@ -118,6 +132,40 @@ String setGameInText(
     }
   }
   return text; // no match — return unchanged
+}
+
+/// Sets the day-of-week and time on the game at [gameIndex] in [weekNumber].
+/// Replaces any existing dow/time suffix; appends if none present.
+/// [hour] is the display hour (12 = noon).
+String setGameDateTimeInText(
+    String text, int weekNumber, int gameIndex, String dow, int hour, int minute) {
+  final lines = text.split('\n');
+  int weekIdx = -1;
+  int count = 0;
+
+  for (int i = 0; i < lines.length; i++) {
+    if (RegExp(r'^WEEK\s+' + weekNumber.toString() + r'\b', caseSensitive: false)
+        .hasMatch(lines[i].trim())) {
+      weekIdx = i;
+      count = 0;
+      continue;
+    }
+    if (weekIdx >= 0) {
+      if (RegExp(r'^WEEK\s+\d+', caseSensitive: false).hasMatch(lines[i].trim())) break;
+      if (lines[i].trim().isEmpty) continue;
+      if (lines[i].trim().toLowerCase().contains(' at ')) {
+        if (count == gameIndex) {
+          final m = RegExp(r'^\S+\s+at\s+\S+', caseSensitive: false)
+              .firstMatch(lines[i].trim());
+          final base = m?.group(0) ?? lines[i].trim();
+          lines[i] = '$base  $dow $hour:${minute.toString().padLeft(2, '0')}';
+          return lines.join('\n');
+        }
+        count++;
+      }
+    }
+  }
+  return text;
 }
 
 /// Removes the game at [gameIndex] in [weekNumber].
