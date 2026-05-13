@@ -1305,6 +1305,153 @@ body {
   color: var(--color-success);
 }
 
+/* ─── Datetime box on game card ───────────────────────────────────────────── */
+
+.sch-datetime-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  border-left: 1px solid var(--color-border);
+  cursor: pointer;
+  min-width: 64px;
+}
+
+.sch-datetime-box:hover {
+  background: var(--color-chip);
+}
+
+.sch-dt-label {
+  font-size: 10px;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sch-dt-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.sch-dt-value.empty {
+  color: var(--color-muted);
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* ─── Day & Time Picker Dialog ────────────────────────────────────────────── */
+
+.sch-dt-dialog {
+  width: 320px;
+}
+
+.sch-dt-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sch-dt-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-muted);
+  margin-bottom: -4px;
+}
+
+.sch-dt-day-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.sch-dt-day-btn {
+  padding: 7px 2px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-chip);
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 80ms, color 80ms, background 80ms;
+}
+
+.sch-dt-day-btn:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+.sch-dt-day-btn.active {
+  background: var(--color-active-bg);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+.sch-dt-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sch-dt-preset-btn {
+  padding: 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-chip);
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 80ms, color 80ms, background 80ms;
+}
+
+.sch-dt-preset-btn:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+.sch-dt-preset-btn.active {
+  background: var(--color-active-bg);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+.sch-dt-custom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sch-dt-custom-label {
+  font-size: 12px;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.sch-dt-time-input {
+  width: 72px;
+  background: var(--color-chip);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  font-family: monospace;
+  font-size: 13px;
+  padding: 4px 8px;
+  outline: none;
+}
+
+.sch-dt-time-input:focus {
+  border-color: var(--color-gold);
+}
+
 /* ─── Team Picker Dialog ──────────────────────────────────────────────────── */
 
 .sch-picker-dialog {

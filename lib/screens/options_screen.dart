@@ -32,7 +32,6 @@ class OptionsScreen {
     <div class="options-card-title">Text View</div>
     ${_row('showPlayers',           'Show Players',            o.showPlayers)}
     ${_row('showSchedule',          'Show Schedule',           o.showSchedule)}
-    ${_row('showScheduleDateTime',  'Show Schedule Date/Time', o.showScheduleDateTime)}
     ${_row('showAttributes',        'Show Attributes',         o.showAttributes)}
     ${_row('showAppearance',   'Show Appearance',    o.showAppearance)}
     ${_row('showSpecialTeams', 'Show Special Teams', o.showSpecialTeams)}
@@ -69,7 +68,7 @@ class OptionsScreen {
   // ─── Wiring ───────────────────────────────────────────────────────────────
 
   static const _textViewKeys = {
-    'showPlayers', 'showSchedule', 'showScheduleDateTime', 'showAttributes',
+    'showPlayers', 'showSchedule', 'showAttributes',
     'showAppearance', 'showSpecialTeams', 'showFreeAgents', 'showDraftClass',
     'showCoaches', 'showTeamData',
   };

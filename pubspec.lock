@@ -399,7 +399,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: "55e6eba6eb9249da4b7ed05977d762ac27fd8737"
+      resolved-ref: "6e24cc9ad25170439f6e55b6a03a31741513e4eb"
       url: "https://github.com/BAD-AL/nfl2k5tool_dart.git"
     source: git
     version: "1.0.0"
