@@ -10,6 +10,7 @@ import 'shell/shell.dart';
 import 'widgets/top_bar.dart';
 import 'widgets/nav_rail.dart';
 import 'widgets/status_bar.dart';
+import 'widgets/player_name_overflow_dialog.dart';
 import 'screens/player_editor_screen.dart';
 import 'screens/schedule_editor_screen.dart';
 import 'screens/text_editor_screen.dart';
@@ -359,8 +360,25 @@ void _exportAs(String name) {
   final tool = appState.tool;
   if (session == null || tool == null) return;
 
-  InputParser(tool).ProcessText(appState.textContent);
+  StaticUtils.Errors.clear();
+  processTextWithNameCheck(
+    tool: tool,
+    text: appState.textContent,
+    onDone: (result) {
+      if (!result.success) {
+        statusBar.showMessage('Export failed: ${result.warnings.join('; ')}');
+        return;
+      }
+      _writeExportBytes(session, tool, name);
+      if (StaticUtils.Errors.isNotEmpty) {
+        _showExportFeedback(StaticUtils.Errors.join('\n'));
+      }
+    },
+    onCancelled: () => statusBar.showMessage('Export cancelled.'),
+  );
+}
 
+void _writeExportBytes(SaveSession session, GamesaveTool tool, String name) {
   final n = name.toLowerCase();
   try {
     Uint8List? bytes;
@@ -389,6 +407,41 @@ void _exportAs(String name) {
   } catch (e) {
     statusBar.showMessage('Export error: $e');
   }
+}
+
+/// Small feedback modal for non-fatal parse errors surfaced after a
+/// successful export (the download already happened; this is informational).
+void _showExportFeedback(String text) {
+  final overlay = document.createElement('div') as HTMLElement
+    ..className = 'dialog-overlay';
+  overlay.innerHTML = '''
+<div class="dialog" style="max-width:600px;width:90%;max-height:80vh;">
+  <div class="dialog-header">
+    <span>Export Warnings</span>
+    <span class="material-symbols-outlined dialog-close" id="exp-fb-close">close</span>
+  </div>
+  <div class="dialog-body">
+    <pre style="margin:0;font-size:12px;white-space:pre-wrap;word-break:break-word;
+      color:var(--color-text);">${text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')}</pre>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn btn-filled" id="exp-fb-ok">OK</button>
+  </div>
+</div>'''.toJS;
+  document.body!.append(overlay);
+
+  void close() { overlay.remove(); }
+  overlay.querySelector('#exp-fb-close')?.addEventListener('click', (Event _) { close(); }.toJS);
+  overlay.querySelector('#exp-fb-ok')?.addEventListener('click', (Event _) { close(); }.toJS);
+
+  JSFunction? escFn;
+  escFn = (KeyboardEvent e) {
+    if (e.key == 'Escape') {
+      document.removeEventListener('keydown', escFn!);
+      close();
+    }
+  }.toJS;
+  document.addEventListener('keydown', escFn);
 }
 
 void downloadBytes(Uint8List bytes, String filename) {

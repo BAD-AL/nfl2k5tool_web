@@ -2,6 +2,7 @@ import 'dart:js_interop';
 import 'package:web/web.dart';
 import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart';
 import '../app_state.dart';
+import '../widgets/player_name_overflow_dialog.dart';
 
 const _kTextCommandsContent = '''
 ====== LookupAndModify ======
@@ -541,11 +542,18 @@ ${_sidebarCollapsed ? '' : '''
     final tool = _appState.tool;
     if (tool == null) return;
     StaticUtils.Errors.clear();
-    InputParser(tool).ProcessText(_appState.textContent);
-    final result = StaticUtils.Errors.isEmpty
-        ? 'Done — no errors.'
-        : StaticUtils.Errors.join('\n');
-    _showFeedbackModal(result);
+    processTextWithNameCheck(
+      tool: tool,
+      text: _appState.textContent,
+      onDone: (result) {
+        final msgs = [
+          if (!result.success) ...result.warnings,
+          ...StaticUtils.Errors,
+        ];
+        _showFeedbackModal(msgs.isEmpty ? 'Done — no errors.' : msgs.join('\n'));
+      },
+      onCancelled: () => _showFeedbackModal('Cancelled — no changes applied.'),
+    );
   }
 
   void _listContents(HTMLTextAreaElement area) {
