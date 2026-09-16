@@ -12,9 +12,12 @@ class MappedEntry {
 /// Format per line: `"Last, First=NNNN"`
 final List<MappedEntry> photoOptions = _parsePhotoIndex();
 
+final Map<String, String> _photoNameById = {
+  for (final e in photoOptions) e.id: e.name,
+};
+
 String photoIdToDisplayName(String id) =>
-    photoOptions.firstWhere((e) => e.id == id,
-        orElse: () => MappedEntry(id, '')).name;
+    _photoNameById[id] ?? _photoNameById[id.padLeft(4, '0')] ?? '';
 
 /// Returns the display name for a PBP ID using DataMap.ReversePBPMap.
 String pbpIdToDisplayName(String id) =>

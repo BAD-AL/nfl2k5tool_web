@@ -4,6 +4,7 @@ import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart' show DataMap;
 import 'package:web/web.dart';
 
 import '../data/player_data_cache.dart';
+import '../data/player_mappings.dart';
 
 // ─── Shared dialog helpers ────────────────────────────────────────────────────
 
@@ -88,6 +89,11 @@ class FacePickerDialog {
       _buildGrid(overlay, category: catSel.value);
     }.toJS);
 
+    final searchInput = overlay.querySelector('#fp-search') as HTMLInputElement?;
+    searchInput?.addEventListener('input', (Event _) {
+      _buildGrid(overlay, category: catSel?.value ?? '');
+    }.toJS);
+
     final showIdsCb = overlay.querySelector('#fp-show-ids') as HTMLInputElement?;
     showIdsCb?.addEventListener('change', (Event _) {
       _grid?.showIds = showIdsCb.checked;
@@ -122,6 +128,10 @@ class FacePickerDialog {
       <option value="">All</option>
       $catOpts
     </select>
+    <input type="text" id="fp-search" placeholder="Search name or ID..."
+      style="background:var(--color-chip);border:1px solid var(--color-border);
+             border-radius:4px;color:var(--color-text);padding:3px 8px;font-size:12px;
+             width:160px;">
     <label style="display:flex;align-items:center;gap:5px;font-size:12px;
                   color:var(--color-muted);cursor:pointer;margin-left:auto">
       <input type="checkbox" id="fp-show-ids"> Show IDs
@@ -129,6 +139,8 @@ class FacePickerDialog {
   </div>
   <div class="dialog-body" style="padding:0;overflow:hidden;flex:1;display:flex;flex-direction:column;">
     <div class="face-grid-scroller"></div>
+    <div class="face-grid-empty" style="display:none;padding:24px;text-align:center;
+      font-size:12px;color:var(--color-muted);">No photos match your search.</div>
   </div>
   <div class="dialog-footer">
     <button class="btn btn-outlined" id="fp-cancel">Cancel</button>
@@ -145,12 +157,27 @@ class FacePickerDialog {
         overlay.querySelector('.face-grid-scroller') as HTMLElement?;
     if (scroller == null) return;
 
-    final List<int> ids;
+    List<int> ids;
     if (category.isEmpty) {
       ids = PlayerDataCache.allPhotoIds;
     } else {
       ids = List.of(PlayerDataCache.photoIdsForCategory(category))..sort();
     }
+
+    final query = (overlay.querySelector('#fp-search') as HTMLInputElement?)
+            ?.value.trim().toLowerCase() ?? '';
+    if (query.isNotEmpty) {
+      ids = ids.where((id) => _matchesSearch(id, query)).toList();
+    }
+
+    final emptyMsg = overlay.querySelector('.face-grid-empty') as HTMLElement?;
+    if (ids.isEmpty) {
+      scroller.style.display = 'none';
+      emptyMsg?.style.display = 'block';
+      return;
+    }
+    scroller.style.display = '';
+    emptyMsg?.style.display = 'none';
 
     _grid = _VirtualFaceGrid(
       scroller: scroller,
@@ -164,6 +191,16 @@ class FacePickerDialog {
       Future.delayed(Duration.zero, () => _grid?.scrollToSelected());
     }
   }
+}
+
+/// True if [id]'s numeric string or its mapped photo name contains [query]
+/// (already lowercased). Used for the Face Picker's search-by-name-or-ID box.
+bool _matchesSearch(int id, String query) {
+  final idStr = id.toString();
+  final paddedId = idStr.padLeft(4, '0'); // matches the displayed "ID 0155" form
+  if (idStr.contains(query) || paddedId.contains(query)) return true;
+  final name = photoIdToDisplayName(idStr);
+  return name.toLowerCase().contains(query);
 }
 
 // ─── Virtual Face Grid ────────────────────────────────────────────────────────
@@ -298,9 +335,11 @@ class _VirtualFaceGrid {
       final isSel = id.toString() == selectedId;
       final label = id.toString().padLeft(4, '0');
       final url = _blobUrlFor(id);
+      final name = photoIdToDisplayName(id.toString());
+      final tooltip = name.isEmpty ? 'ID $label' : '$name (ID $label)';
       buf.write(
         '<div class="face-thumb${isSel ? ' selected' : ''}" '
-        'data-id="$id" title="ID $label">'
+        'data-id="$id" title="${_esc(tooltip)}">'
         '<img src="$url" alt="$label" loading="eager">'
         '<div class="face-id-label" style="display:${_showIds ? 'block' : 'none'}">$label</div>'
         '</div>',
