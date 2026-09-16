@@ -465,7 +465,7 @@ ${_buildAttrTabBarHtml()}
           _selectedTeam      = (e.target as HTMLSelectElement).value;
           _selectedLineIndex = -1;
           _selectedFields    = {};
-          _rebuildList();
+          _rebuildPlayerListOnly();
           _rebuildAttrPanel();
         }.toJS);
 
@@ -475,7 +475,7 @@ ${_buildAttrTabBarHtml()}
         (Event e) {
           _searchQuery =
               (e.target as HTMLInputElement).value;
-          _rebuildList();
+          _rebuildPlayerListOnly();
         }.toJS);
 
     // Position chips (event delegation)
@@ -486,7 +486,12 @@ ${_buildAttrTabBarHtml()}
               (e.target as HTMLElement?)?.closest('.pos-chip') as HTMLElement?;
           if (chip == null) return;
           _posFilter = chip.dataset['pos'];
-          _rebuildList();
+          final chips = panel.querySelectorAll('.pos-chip');
+          for (var i = 0; i < chips.length; i++) {
+            final c = chips.item(i) as HTMLElement;
+            c.classList.toggle('active', c.dataset['pos'] == _posFilter);
+          }
+          _rebuildPlayerListOnly();
         }.toJS);
 
     // Player row selection + reorder (event delegation on player list)
@@ -827,12 +832,19 @@ ${_buildAttrTabBarHtml()}
 
   // ─── Partial rebuilds ────────────────────────────────────────────────────
 
-  void _rebuildList() {
-    final panel =
-        _container.querySelector('#pes-list-panel') as HTMLElement?;
-    if (panel == null) return;
-    panel.innerHTML = _buildListPanelInner().toJS;
-    _attachListPanelListeners();
+  /// Re-renders only the row list — never the search input, team select, or
+  /// position chips around it. Those live in the same panel, so a full
+  /// panel rebuild (replacing the whole `innerHTML`) would create a brand
+  /// new `<input>` node on every keystroke and silently drop focus, forcing
+  /// a re-click per character typed into search. The rows list is rebuilt
+  /// by innerHTML swap too, but that's safe: row click handling is
+  /// delegated on the (unreplaced) `#pes-player-list` container itself, not
+  /// bound to individual row elements.
+  void _rebuildPlayerListOnly() {
+    final list =
+        _container.querySelector('#pes-player-list') as HTMLElement?;
+    if (list == null) return;
+    list.innerHTML = _buildPlayerRowsHtml().toJS;
   }
 
   void _rebuildTabBar() {
@@ -944,6 +956,43 @@ ${_buildAttrTabBarHtml()}
         detectDelimiter(_appState.textContent));
     // Update the hash so next render() call doesn't re-parse unnecessarily
     _lastTextHash = _appState.textContent.hashCode;
+    _syncPlayerRowDisplay();
+  }
+
+  /// Patches the player-list-row displays [_writeField] alone leaves stale
+  /// (only rebuilt on a full re-render, which the hash-skip above
+  /// deliberately avoids): the position badge, name, and jersey#/years-pro
+  /// meta line. Also updates the cached [PlayerRow] so a later read of
+  /// [_teamBlocks] — e.g. reordering — doesn't see stale data either.
+  /// Cheap enough to run unconditionally on every write, including the many
+  /// fired during a numeric-bar drag.
+  void _syncPlayerRowDisplay() {
+    final name = '${_selectedFields['fname'] ?? ''} ${_selectedFields['lname'] ?? ''}'.trim();
+    final position = _selectedFields['Position'] ?? '';
+    final jersey = _selectedFields['JerseyNumber'] ?? '';
+    final yearsPro = _selectedFields['YearsPro'] ?? '';
+
+    for (final block in _teamBlocks) {
+      for (final row in block.players) {
+        if (row.lineIndex == _selectedLineIndex) {
+          row.fields['fname'] = _selectedFields['fname'] ?? '';
+          row.fields['lname'] = _selectedFields['lname'] ?? '';
+          row.fields['Position'] = position;
+          row.fields['JerseyNumber'] = jersey;
+          row.fields['YearsPro'] = yearsPro;
+        }
+      }
+    }
+
+    (_container.querySelector('.player-attr-name') as HTMLElement?)
+        ?.textContent = name;
+
+    final rowEl = _container
+        .querySelector('.player-row[data-line="$_selectedLineIndex"]') as HTMLElement?;
+    (rowEl?.querySelector('.player-row-name') as HTMLElement?)?.textContent = name;
+    (rowEl?.querySelector('.pos-badge') as HTMLElement?)?.textContent = position;
+    (rowEl?.querySelector('.player-row-meta') as HTMLElement?)?.textContent =
+        '#$jersey · ${yearsPro}yr';
   }
 
   // ─── Mapped ID picker ────────────────────────────────────────────────────
