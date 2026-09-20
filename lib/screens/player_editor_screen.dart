@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
 import 'package:web/web.dart';
 
 import '../app_state.dart';
 import '../data/attr_groups.dart';
+import '../data/equipment_appearance.dart';
 import '../data/player_data_cache.dart';
 import '../data/player_mappings.dart';
 import '../data/text_parser.dart';
@@ -262,6 +264,8 @@ ${_buildAttrTabBarHtml()}
     final hand       = _esc(f['Hand']        ?? '');
     final height     = _esc(f['Height']      ?? '');
     final weight     = _esc(f['Weight']      ?? '');
+    final skinRaw    = f['Skin'] ?? '';
+    final skin       = _esc(skinRaw);
 
     final photoHtml = _buildPhotoHtml();
 
@@ -280,6 +284,10 @@ ${_buildAttrTabBarHtml()}
       ${hand.isNotEmpty   ? '<span class="meta-chip">$hand</span>'         : ''}
       ${height.isNotEmpty ? '<span class="meta-chip">$height</span>'       : ''}
       ${weight.isNotEmpty ? '<span class="meta-chip">${weight}lb</span>'   : ''}
+      ${skin.isNotEmpty ? '<span class="meta-chip skin-chip" '
+          'style="background:${skinColorHex(skinRaw)};'
+          'color:${skinTextColor(skinRaw)};'
+          'border-color:${skinColorHex(skinRaw)};">$skin</span>' : ''}
     </div>
   </div>
 </div>''';
@@ -340,6 +348,8 @@ ${_buildAttrTabBarHtml()}
           buf.write(_buildAutocompleteCard(attr, value));
         case AttrType.mappedId:
           buf.write(_buildMappedIdCard(attr, value));
+        case AttrType.imagePopover:
+          buf.write(_buildImagePopoverCard(attr, value));
       }
     }
 
@@ -450,6 +460,68 @@ ${_buildAttrTabBarHtml()}
       data-key="${_esc(attr.key)}" title="Pick…">search</span>
   </div>
 </div>''';
+  }
+
+  /// Thumbnail-or-swatch + label trigger that opens an anchored popover
+  /// listing every option with its own image/swatch (see the design
+  /// discussion this implements: fewer full-screen dialogs, but still able
+  /// to browse equipment visually instead of guessing from text labels).
+  /// The popover's rows are built lazily each time it's opened (see the
+  /// 'click' handler in _attachAttrGridListeners) — not here — since eagerly
+  /// base64-encoding every option's image for every field on every render
+  /// (up to 27 for FaceMask, across 11 fields) would be real, avoidable cost
+  /// paid on every player selection whether or not the popover is ever
+  /// opened. Rebuilding per-open (rather than caching after the first) is
+  /// still cheap — PlayerDataCache caches decompressed image bytes, so a
+  /// reopen only re-runs base64 encoding — and keeps the 'selected'
+  /// highlight from ever going stale.
+  String _buildImagePopoverCard(AttrDef attr, String value) {
+    final thumb = _equipmentThumbHtml(attr.key, value);
+    final label = value.isEmpty ? '(none)' : value;
+    return '''
+<div class="attr-card image-popover-field" data-key="${_esc(attr.key)}">
+  <div class="attr-card-label">${_esc(attr.label)}</div>
+  <button type="button" class="img-popover-trigger" data-key="${_esc(attr.key)}">
+    $thumb
+    <span class="img-popover-label">${_esc(label)}</span>
+    <span class="material-symbols-outlined img-popover-caret">expand_more</span>
+  </button>
+  <div class="img-popover-panel" data-key="${_esc(attr.key)}" style="display:none"></div>
+</div>''';
+  }
+
+  /// A single thumbnail: a color swatch for Skin (never image-backed — see
+  /// equipment_appearance.dart), an equipment-image <img> when one resolves,
+  /// or an empty placeholder swatch when the field has no image for this
+  /// value (e.g. the known-incomplete Elbow variants).
+  String _equipmentThumbHtml(String key, String value) {
+    if (key == 'Skin') {
+      return '<div class="img-popover-thumb swatch" '
+          'style="background:${skinColorHex(value)}"></div>';
+    }
+    final filename = equipmentImageFilename(key, value);
+    final bytes = filename == null ? null : PlayerDataCache.getEquipmentImage(filename);
+    if (bytes == null) {
+      return '<div class="img-popover-thumb placeholder"></div>';
+    }
+    final b64 = base64Encode(bytes);
+    return '<img class="img-popover-thumb" src="data:image/jpeg;base64,$b64" alt="">';
+  }
+
+  /// Every option for [attr] as a clickable row (thumbnail/swatch + label),
+  /// rebuilt fresh each time the popover opens — see _buildImagePopoverCard's
+  /// doc comment for why.
+  String _buildImagePopoverRows(AttrDef attr, String currentValue) {
+    final buf = StringBuffer();
+    for (final opt in attr.options) {
+      final sel = opt == currentValue ? ' selected' : '';
+      buf.write('''
+<div class="img-popover-row$sel" data-key="${_esc(attr.key)}" data-value="${_esc(opt)}">
+  ${_equipmentThumbHtml(attr.key, opt)}
+  <span>${_esc(opt)}</span>
+</div>''');
+    }
+    return buf.toString();
   }
 
   // ─── Event wiring ────────────────────────────────────────────────────────
@@ -576,6 +648,41 @@ ${_buildAttrTabBarHtml()}
         'click',
         (Event e) {
           final target = e.target as HTMLElement?;
+
+          // Image-popover row click — select this option
+          final imgRow = target?.closest('.img-popover-row') as HTMLElement?;
+          if (imgRow != null) {
+            final key = imgRow.dataset['key'];
+            final val = imgRow.dataset['value'];
+            _writeField(key, val);
+            _updateImagePopoverTrigger(grid, key, val);
+            (imgRow.closest('.img-popover-panel') as HTMLElement?)
+                ?.style.display = 'none';
+            return;
+          }
+
+          // Image-popover trigger click — toggle its panel, (re)building the
+          // rows fresh each open so the 'selected' highlight never goes
+          // stale (cheap: PlayerDataCache caches decompressed image bytes,
+          // so a reopen only re-runs base64 encoding, not decompression).
+          final imgTrigger = target?.closest('.img-popover-trigger') as HTMLElement?;
+          if (imgTrigger != null) {
+            final key = imgTrigger.dataset['key'];
+            final panel = (imgTrigger.closest('.attr-card') as HTMLElement?)
+                ?.querySelector('.img-popover-panel') as HTMLElement?;
+            if (panel == null) return;
+            final opening = panel.style.display == 'none';
+            _closeAllImagePopovers(grid);
+            if (opening) {
+              final attr = _findAttrDef(key);
+              if (attr != null) {
+                panel.innerHTML =
+                    _buildImagePopoverRows(attr, _selectedFields[key] ?? '').toJS;
+              }
+              panel.style.display = 'block';
+            }
+            return;
+          }
 
           // Mapped-id search
           if (target != null && target.classList.contains('pes-mapped-id-search')) {
@@ -828,6 +935,43 @@ ${_buildAttrTabBarHtml()}
                     ?.remove());
           }
         }.toJS);
+
+    // Click-away close for image popovers. 'focusout' (unlike 'blur') bubbles,
+    // so this delegates correctly from the grid. The delay lets a row's
+    // 'click' (fired just after the mousedown that triggers this) land and
+    // write the value before the panel actually hides.
+    grid.addEventListener(
+        'focusout',
+        (Event e) {
+          final target = e.target as HTMLElement?;
+          if (target == null || !target.classList.contains('img-popover-trigger')) return;
+          final panel = (target.closest('.attr-card') as HTMLElement?)
+              ?.querySelector('.img-popover-panel') as HTMLElement?;
+          if (panel == null) return;
+          Future.delayed(const Duration(milliseconds: 150), () {
+            panel.style.display = 'none';
+          });
+        }.toJS);
+  }
+
+  void _closeAllImagePopovers(HTMLElement grid) {
+    final panels = grid.querySelectorAll('.img-popover-panel');
+    for (var i = 0; i < panels.length; i++) {
+      (panels.item(i) as HTMLElement).style.display = 'none';
+    }
+  }
+
+  void _updateImagePopoverTrigger(HTMLElement grid, String key, String value) {
+    final trigger = grid.querySelector('.img-popover-trigger[data-key="${_esc(key)}"]')
+        as HTMLElement?;
+    if (trigger == null) return;
+    final label = value.isEmpty ? '(none)' : value;
+    trigger.innerHTML = '''
+${_equipmentThumbHtml(key, value)}
+<span class="img-popover-label">${_esc(label)}</span>
+<span class="material-symbols-outlined img-popover-caret">expand_more</span>
+'''
+        .toJS;
   }
 
   // ─── Partial rebuilds ────────────────────────────────────────────────────

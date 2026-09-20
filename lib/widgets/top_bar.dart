@@ -24,6 +24,7 @@ class TopBar {
   final HTMLButtonElement _btnTheme;
   final HTMLElement _themeIcon;
   final HTMLButtonElement _btnOtherLinks;
+  final HTMLButtonElement _btnHelp;
 
   TopBar(this.appState)
       : _btnOpen = document.getElementById('btn-open') as HTMLButtonElement,
@@ -37,7 +38,8 @@ class TopBar {
         _btnTheme = document.getElementById('btn-theme') as HTMLButtonElement,
         _themeIcon = document.getElementById('theme-icon') as HTMLElement,
         _btnOtherLinks =
-            document.getElementById('btn-other-links') as HTMLButtonElement;
+            document.getElementById('btn-other-links') as HTMLButtonElement,
+        _btnHelp = document.getElementById('btn-help') as HTMLButtonElement;
 
   void wire({
     required void Function() onOpen,
@@ -48,6 +50,7 @@ class TopBar {
     _btnExport.onClick.listen((_) => onExport());
     _btnTheme.onClick.listen((_) => onThemeToggle());
     _btnOtherLinks.addEventListener('click', (Event _) { _showLinksModal(); }.toJS);
+    _btnHelp.addEventListener('click', (Event _) { _showHelpModal(); }.toJS);
   }
 
   void _showLinksModal() {
@@ -79,6 +82,44 @@ class TopBar {
   </div>
   <div class="dialog-body" style="padding:8px 0;">
 $rows
+  </div>
+</div>'''.toJS;
+
+    document.body!.append(overlay);
+
+    void close() { overlay.remove(); }
+
+    overlay.querySelector('.dialog-close')
+        ?.addEventListener('click', (Event _) { close(); }.toJS);
+    overlay.addEventListener('click', (Event e) {
+      if ((e.target as HTMLElement?) == overlay) close();
+    }.toJS);
+    (overlay.firstElementChild as HTMLElement?)
+        ?.addEventListener('click', (Event e) { e.stopPropagation(); }.toJS);
+
+    JSFunction? escFn;
+    escFn = (KeyboardEvent e) {
+      if (e.key == 'Escape') {
+        document.removeEventListener('keydown', escFn!);
+        close();
+      }
+    }.toJS;
+    document.addEventListener('keydown', escFn);
+  }
+
+  void _showHelpModal() {
+    final overlay = document.createElement('div') as HTMLElement
+      ..className = 'dialog-overlay';
+
+    overlay.innerHTML = '''
+<div class="dialog" style="max-width:940px;width:92%;">
+  <div class="dialog-header">
+    <span>How to Use NFL2K5 Tool</span>
+    <span class="material-symbols-outlined dialog-close">close</span>
+  </div>
+  <div class="dialog-body" style="padding:12px;">
+    <img src="assets/demo.gif" alt="Demo: open a save, edit a player, browse the schedule, coaches, and team data, then export"
+      style="max-width:100%;display:block;border-radius:6px;border:1px solid var(--color-border);">
   </div>
 </div>'''.toJS;
 

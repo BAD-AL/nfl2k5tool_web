@@ -1,5 +1,11 @@
 /// Attribute type — determines which widget is rendered for an attr card.
-enum AttrType { numeric, text, dropdown, slider, datePicker, autocomplete, mappedId }
+enum AttrType {
+  numeric, text, dropdown, slider, datePicker, autocomplete, mappedId,
+  /// A thumbnail (or color swatch, for Skin) + label trigger that opens an
+  /// anchored popover listing every option with its own thumbnail/swatch —
+  /// see PlayerEditorScreen._buildImagePopoverCard.
+  imagePopover,
+}
 
 /// Definition of a single player/coach attribute.
 class AttrDef {
@@ -95,7 +101,7 @@ final List<AttrGroup> kAttrGroups = [
       options: ['Skinny', 'Normal', 'Large', 'ExtraLarge'],
     ),
     AttrDef(
-      key: 'Skin', label: 'Skin', type: AttrType.dropdown,
+      key: 'Skin', label: 'Skin', type: AttrType.imagePopover,
       options: [for (int i = 1; i <= 22; i++) 'Skin$i'],
     ),
     AttrDef(
@@ -111,7 +117,7 @@ final List<AttrGroup> kAttrGroups = [
       options: ['Standard', 'Revolution'],
     ),
     AttrDef(
-      key: 'FaceMask', label: 'Face Mask', type: AttrType.dropdown,
+      key: 'FaceMask', label: 'Face Mask', type: AttrType.imagePopover,
       options: [for (int i = 1; i <= 27; i++) 'FaceMask$i'],
     ),
     AttrDef(
@@ -127,27 +133,27 @@ final List<AttrGroup> kAttrGroups = [
       options: ['No', 'Yes'],
     ),
     AttrDef(
-      key: 'LeftGlove', label: 'Left Glove', type: AttrType.dropdown,
+      key: 'LeftGlove', label: 'Left Glove', type: AttrType.imagePopover,
       options: ['None', 'Type1', 'Type2', 'Type3', 'Type4', 'Team1', 'Team2', 'Team3', 'Team4', 'Taped'],
     ),
     AttrDef(
-      key: 'RightGlove', label: 'Right Glove', type: AttrType.dropdown,
+      key: 'RightGlove', label: 'Right Glove', type: AttrType.imagePopover,
       options: ['None', 'Type1', 'Type2', 'Type3', 'Type4', 'Team1', 'Team2', 'Team3', 'Team4', 'Taped'],
     ),
     AttrDef(
-      key: 'LeftWrist', label: 'Left Wrist', type: AttrType.dropdown,
+      key: 'LeftWrist', label: 'Left Wrist', type: AttrType.imagePopover,
       options: ['None', 'SingleWhite', 'DoubleWhite', 'SingleBlack', 'DoubleBlack', 'NeopreneSmall', 'NeopreneLarge', 'ElasticSmall', 'ElasticLarge', 'SingleTeam', 'DoubleTeam', 'TapedSmall', 'TapedLarge', 'Quarterback'],
     ),
     AttrDef(
-      key: 'RightWrist', label: 'Right Wrist', type: AttrType.dropdown,
+      key: 'RightWrist', label: 'Right Wrist', type: AttrType.imagePopover,
       options: ['None', 'SingleWhite', 'DoubleWhite', 'SingleBlack', 'DoubleBlack', 'NeopreneSmall', 'NeopreneLarge', 'ElasticSmall', 'ElasticLarge', 'SingleTeam', 'DoubleTeam', 'TapedSmall', 'TapedLarge', 'Quarterback'],
     ),
     AttrDef(
-      key: 'LeftElbow', label: 'Left Elbow', type: AttrType.dropdown,
+      key: 'LeftElbow', label: 'Left Elbow', type: AttrType.imagePopover,
       options: ['None', 'White', 'Black', 'WhiteBlackStripe', 'BlackWhiteStripe', 'BlackTeamStripe', 'Team', 'WhiteTeamStripe', 'Elastic', 'Neoprene', 'WhiteTurf', 'BlackTurf', 'Taped', 'HighWhite', 'HighBlack', 'HighTeam'],
     ),
     AttrDef(
-      key: 'RightElbow', label: 'Right Elbow', type: AttrType.dropdown,
+      key: 'RightElbow', label: 'Right Elbow', type: AttrType.imagePopover,
       options: ['None', 'White', 'Black', 'WhiteBlackStripe', 'BlackWhiteStripe', 'BlackTeamStripe', 'Team', 'WhiteTeamStripe', 'Elastic', 'Neoprene', 'WhiteTurf', 'BlackTurf', 'Taped', 'HighWhite', 'HighBlack', 'HighTeam'],
     ),
     AttrDef(
@@ -155,15 +161,15 @@ final List<AttrGroup> kAttrGroups = [
       options: ['None', 'White', 'Black', 'Team'],
     ),
     AttrDef(
-      key: 'LeftShoe', label: 'Left Shoe', type: AttrType.dropdown,
+      key: 'LeftShoe', label: 'Left Shoe', type: AttrType.imagePopover,
       options: ['Shoe1', 'Shoe2', 'Shoe3', 'Shoe4', 'Shoe5', 'Shoe6', 'Taped'],
     ),
     AttrDef(
-      key: 'RightShoe', label: 'Right Shoe', type: AttrType.dropdown,
+      key: 'RightShoe', label: 'Right Shoe', type: AttrType.imagePopover,
       options: ['Shoe1', 'Shoe2', 'Shoe3', 'Shoe4', 'Shoe5', 'Shoe6', 'Taped'],
     ),
     AttrDef(
-      key: 'NeckRoll', label: 'Neck Roll', type: AttrType.dropdown,
+      key: 'NeckRoll', label: 'Neck Roll', type: AttrType.imagePopover,
       options: ['None', 'Collar', 'Roll', 'Washboard', 'Bulging'],
     ),
     AttrDef(

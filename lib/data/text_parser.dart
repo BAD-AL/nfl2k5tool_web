@@ -175,10 +175,15 @@ List<TeamBlock> parseTeamBlocksForDisplay(String text) {
       continue;
     }
 
-    // Player data row — only inside a team block, with headers available
+    // Player data row — only inside a team block, with headers available.
+    // KR1/KR2/PR/LS are special-teams depth-chart lines (e.g. 'KR1,WR6'),
+    // not players — they're edited via the Team Data screen's Special
+    // Teams section instead (see parseSpecialTeamsForTeam).
     if (currentTeam != null && headers.isNotEmpty && trimmed.isNotEmpty &&
         !trimmed.startsWith('//') && !trimmed.startsWith('SET(') &&
-        !trimmed.startsWith('YEAR=') && !trimmed.startsWith('WEEK')) {
+        !trimmed.startsWith('YEAR=') && !trimmed.startsWith('WEEK') &&
+        !trimmed.startsWith('KR1,') && !trimmed.startsWith('KR2,') &&
+        !trimmed.startsWith('PR,') && !trimmed.startsWith('LS,')) {
       final vals = splitCsv(trimmed, delim);
       final fieldMap = <String, String>{};
       for (int j = 0; j < headers.length && j < vals.length; j++) {
@@ -481,7 +486,9 @@ String swapLines(String text, int lineIndexA, int lineIndexB) {
     }
     if (inTeam && hasSeenHeader && t.isNotEmpty &&
         !t.startsWith('//') && !t.startsWith('SET(') &&
-        !t.startsWith('WEEK')) {
+        !t.startsWith('WEEK') &&
+        !t.startsWith('KR1,') && !t.startsWith('KR2,') &&
+        !t.startsWith('PR,') && !t.startsWith('LS,')) {
       players++;
     }
   }

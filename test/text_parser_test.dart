@@ -250,6 +250,27 @@ void main() {
       // Line 4: Peyton Manning, Line 5: blank, Line 6: Team = Packers, Line 7: Aaron Rodgers
       expect(blocks[1].players[0].lineIndex, 7);
     });
+
+    test('KR1/KR2/PR/LS special-teams lines are not treated as players', () {
+      // With Show Special Teams on, these 4 lines appear inside the team
+      // block right after the real player rows (see GetTeamPlayers). They
+      // belong to the Team Data screen's Special Teams section, not the
+      // Player Editor's list.
+      const text = '#Position,fname,lname,JerseyNumber\n'
+          'Team = Bears    Players:2\n'
+          'QB,Tom,Brady,12\n'
+          'WR,Randy,Moss,84\n'
+          'KR1,WR1\n'
+          'KR2,WR2\n'
+          'PR,WR1\n'
+          'LS,C1\n';
+      final blocks = parseTeamBlocksForDisplay(text);
+      expect(blocks.length, 1);
+      expect(blocks[0].players.length, 2,
+          reason: 'Only Tom Brady and Randy Moss are real players');
+      expect(blocks[0].players.map((p) => p.fullName),
+          ['Tom Brady', 'Randy Moss']);
+    });
   });
 
   // ── countTeamsAndPlayers ──────────────────────────────────────────────────
@@ -267,6 +288,20 @@ void main() {
       final (teams, players) = countTeamsAndPlayers('');
       expect(teams, 0);
       expect(players, 0);
+    });
+
+    test('KR1/KR2/PR/LS special-teams lines are not counted as players', () {
+      const text = '#fname,lname\n'
+          'Team = Bears    Players:2\n'
+          'Tom,Brady\n'
+          'Randy,Moss\n'
+          'KR1,WR1\n'
+          'KR2,WR2\n'
+          'PR,WR1\n'
+          'LS,C1\n';
+      final (teams, players) = countTeamsAndPlayers(text);
+      expect(teams, 1);
+      expect(players, 2);
     });
   });
 

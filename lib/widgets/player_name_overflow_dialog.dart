@@ -34,6 +34,12 @@ void _wireOverlayClose(HTMLElement overlay, void Function() close) {
 /// [PlayerNameOverflowDialog] appear, offering dedup/truncation reduction
 /// options before the real commit happens.
 ///
+/// A pure LookupAndModify script (no Team= section) skips the check
+/// entirely — collectPlayerNamesFromText marks such [names] as
+/// [PlayerNames.bypassed], and this always goes straight to [onDone]
+/// regardless of [PlayerNames.requiredBytes], since that reflects the
+/// file's pre-existing names and has nothing to do with this operation.
+///
 /// If the user cancels the dialog, [tool]'s GameSaveData is restored to its
 /// state from before this function ran (undoing the non-name attribute
 /// writes that PlayerNames.fromTool's collect pass already made) and
@@ -50,7 +56,7 @@ void processTextWithNameCheck({
     onDone(commitPlayerNamesAndApplyRest(tool, text, names));
   }
 
-  if (names.requiredBytes <= PlayerNames.budget) {
+  if (names.bypassed || names.requiredBytes <= PlayerNames.budget) {
     finish();
     return;
   }

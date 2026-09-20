@@ -26,6 +26,15 @@ class PlayerDataCache {
   /// Decompressed JPEG bytes for coach bodies, populated on first access.
   static final Map<String, Uint8List> _bodyCache = {};
 
+  /// ArchiveFile references keyed by lowercased equipment-image filename
+  /// (no extension), e.g. 'facemask14' -> the ArchiveFile for
+  /// 'Facemask14.jpg'. Lowercased because the engine's enum names (e.g.
+  /// 'FaceMask14') don't always match the asset's exact casing.
+  static Map<String, ArchiveFile>? _equipmentIndex;
+
+  /// Decompressed JPEG bytes for equipment images, populated on first access.
+  static final Map<String, Uint8List> _equipmentCache = {};
+
   /// Parses the ZIP directory on first call; no-op thereafter.
   /// Does NOT decompress any photo data — completes in well under 100 ms.
   static void ensureLoaded() {
@@ -50,6 +59,9 @@ class PlayerDataCache {
       } else if (name.endsWith('.jpg') && name.contains('CoachBodies/')) {
         final basename = name.split('/').last.replaceAll('.jpg', '');
         (_bodyIndex ??= {})[basename] = file;
+      } else if (name.endsWith('.jpg') && name.contains('EquipmentImages/')) {
+        final basename = name.split('/').last.replaceAll('.jpg', '');
+        (_equipmentIndex ??= {})[basename.toLowerCase()] = file;
       } else if (name.endsWith('FaceFormCategories.json')) {
         // Categories JSON is tiny; decode it eagerly.
         final json = utf8.decode(file.content as List<int>);
@@ -88,6 +100,20 @@ class PlayerDataCache {
     if (archiveFile == null) return null;
     final bytes = archiveFile.content as Uint8List;
     _bodyCache[name] = bytes;
+    return bytes;
+  }
+
+  /// Returns the JPEG bytes for the equipment image matching [filenameNoExt]
+  /// (e.g. 'Facemask14' or 'GloveType1' — case-insensitive, no extension).
+  /// Decompresses on first access and caches. Returns `null` if not found.
+  static Uint8List? getEquipmentImage(String filenameNoExt) {
+    final key = filenameNoExt.toLowerCase();
+    final cached = _equipmentCache[key];
+    if (cached != null) return cached;
+    final archiveFile = _equipmentIndex?[key];
+    if (archiveFile == null) return null;
+    final bytes = archiveFile.content as Uint8List;
+    _equipmentCache[key] = bytes;
     return bytes;
   }
 

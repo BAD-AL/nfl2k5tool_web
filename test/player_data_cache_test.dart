@@ -51,4 +51,35 @@ void main() {
   test('photoIdsForCategory for unknown category returns empty list', () {
     expect(PlayerDataCache.photoIdsForCategory('nonExistentCategory'), isEmpty);
   });
+
+  // ── getEquipmentImage ──────────────────────────────────────────────────
+
+  test('getEquipmentImage resolves a no-prefix filename (Shoe)', () {
+    final bytes = PlayerDataCache.getEquipmentImage('Shoe3');
+    expect(bytes, isNotNull);
+    expect(bytes![0], equals(0xFF));
+    expect(bytes[1], equals(0xD8));
+  });
+
+  test('getEquipmentImage is case-insensitive (engine "FaceMask14" vs '
+      'asset "Facemask14.jpg")', () {
+    expect(PlayerDataCache.getEquipmentImage('FaceMask14'), isNotNull);
+    expect(PlayerDataCache.getEquipmentImage('Facemask14'), isNotNull);
+    expect(PlayerDataCache.getEquipmentImage('FACEMASK14'), isNotNull);
+  });
+
+  test('getEquipmentImage resolves a prefixed filename (Glove)', () {
+    expect(PlayerDataCache.getEquipmentImage('GloveType1'), isNotNull);
+    expect(PlayerDataCache.getEquipmentImage('GloveNone'), isNotNull);
+  });
+
+  test('getEquipmentImage returns null for an unknown filename', () {
+    expect(PlayerDataCache.getEquipmentImage('NotARealFile'), isNull);
+  });
+
+  test('getEquipmentImage returns null for known-missing Elbow variants '
+      '(assets are incomplete for this field)', () {
+    // Ported from the old WinForms code's own "elbow == incomplete" comment.
+    expect(PlayerDataCache.getEquipmentImage('ElbowHighWhite'), isNull);
+  });
 }

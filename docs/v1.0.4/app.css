@@ -1036,6 +1036,96 @@ body {
   color: var(--color-gold);
 }
 
+/* Image-popover card (equipment thumbnails / Skin color swatch) */
+.attr-card.image-popover-field {
+  width: 168px;
+  position: relative;
+  overflow: visible;
+}
+
+.img-popover-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 8px 6px;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.img-popover-thumb {
+  width: 30px;
+  height: 42px;
+  border-radius: 4px;
+  object-fit: contain;
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+  background: var(--color-chip);
+}
+
+.img-popover-thumb.placeholder {
+  background: var(--color-chip);
+}
+
+.img-popover-label {
+  font-size: 12px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.img-popover-caret {
+  font-size: 15px;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.img-popover-panel {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 300;
+  width: 260px;
+  max-height: 340px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.img-popover-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.img-popover-row:hover,
+.img-popover-row.selected {
+  background: var(--color-active-bg);
+  color: var(--color-gold);
+}
+
+.img-popover-row .img-popover-thumb {
+  width: 44px;
+  height: 64px;
+}
+
+.meta-chip.skin-chip {
+  font-weight: 600;
+  border-style: solid;
+  border-width: 1px;
+}
+
 /* ═══════════════════════════════════════════════════════
    Section 8: Schedule Editor (weekly grid, matrix, integrity)
    ═══════════════════════════════════════════════════════ */
