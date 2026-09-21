@@ -5,7 +5,7 @@ A browser-based editor for NFL 2K5 gamesave files. Load a save, edit players, sc
 Try it now: https://BAD-AL.github.io/nfl2k5tool_web/
 [![Alt Text](nfl2k5tool_web.png)](https://bad-al.github.io/nfl2k5tool_web/)
 
-
+Beta version https://bad-al.github.io/nfl2k5tool_web/v1.0.4/ 
 
 ---
 
