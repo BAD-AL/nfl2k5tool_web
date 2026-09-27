@@ -479,7 +479,12 @@ ${_buildTabBarHtml()}
       _rebuildBudgetBar();
     }.toJS);
 
-    grid.addEventListener('blur', (Event e) {
+    // 'focusout' (unlike 'blur') bubbles, so this delegates correctly from
+    // the grid -- see the identical note in player_editor_screen.dart. A
+    // plain 'blur' listener here would never fire for a descendant input's
+    // blur at all, silently discarding every typed edit that isn't also
+    // reflected by some other live-update path.
+    grid.addEventListener('focusout', (Event e) {
       final target = e.target as HTMLElement?;
       if (target == null || !target.classList.contains('ces-string-input')) return;
       final key = (target as HTMLInputElement).dataset['key'];

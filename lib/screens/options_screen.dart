@@ -49,6 +49,18 @@ class OptionsScreen {
     ${_row('autoFixSkinFromPhoto',  'Auto Fix Skin from Photo', o.autoFixSkinFromPhoto)}
   </div>
 
+  <div class="options-card">
+    <div class="options-card-title">Roster Fixes</div>
+    ${_row('clearHistoricPlayerStats', 'Clear Historic Player Stats', o.clearHistoricPlayerStats)}
+    <div class="options-row-description">
+      Clears each player's stats-history pointer when exporting a Roster file.
+      Turn this on before starting a new Franchise from an edited roster, so a
+      new player can't inherit an old player's real career stats from the same
+      roster slot. Only applies to Roster files — has no effect on Franchise
+      files.
+    </div>
+  </div>
+
 </div>
 ''';
   }
@@ -75,6 +87,7 @@ class OptionsScreen {
 
   static const _autoUpdateKeys = {
     'autoUpdateDepthCharts', 'autoUpdatePhotos', 'autoUpdatePBP', 'autoFixSkinFromPhoto',
+    'clearHistoricPlayerStats',
   };
 
   void _wireToggles() {
@@ -140,12 +153,14 @@ class OptionsScreen {
         .replaceAll('\nAutoUpdateDepthChart', '')
         .replaceAll('\nAutoUpdatePhoto', '')
         .replaceAll('\nAutoUpdatePBP', '')
-        .replaceAll('\nAutoFixSkinFromPhoto', '');
+        .replaceAll('\nAutoFixSkinFromPhoto', '')
+        .replaceAll('\nClearHistoricPlayerStats', '');
     final o = appState.options;
     if (o.autoUpdateDepthCharts) text += '\nAutoUpdateDepthChart';
     if (o.autoUpdatePhotos) text += '\nAutoUpdatePhoto';
     if (o.autoUpdatePBP) text += '\nAutoUpdatePBP';
     if (o.autoFixSkinFromPhoto) text += '\nAutoFixSkinFromPhoto';
+    if (o.clearHistoricPlayerStats) text += '\nClearHistoricPlayerStats';
     appState.textContent = text;
   }
 
@@ -168,6 +183,7 @@ class OptionsScreen {
       case 'autoUpdatePhotos':      o.autoUpdatePhotos = value;
       case 'autoUpdatePBP':         o.autoUpdatePBP = value;
       case 'autoFixSkinFromPhoto':  o.autoFixSkinFromPhoto = value;
+      case 'clearHistoricPlayerStats': o.clearHistoricPlayerStats = value;
     }
   }
 

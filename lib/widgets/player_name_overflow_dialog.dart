@@ -26,34 +26,46 @@ void _wireOverlayClose(HTMLElement overlay, void Function() close) {
       ?.addEventListener('click', (Event e) { e.stopPropagation(); }.toJS);
 }
 
-/// Runs [text] through [tool] with a player-name overflow check first.
+/// Runs [text] through [tool] with a player-name overflow check first, then
+/// commits both the player-name and coach-string pools together (see
+/// collectEditsFromText/commitEditsAndApplyRest — both are handled by a
+/// single InputParser pass, since ProcessText also applies every other
+/// attribute in [text] and can't safely run twice).
 ///
-/// The check is cheap and silent — the vast majority of saves are under
-/// budget and this returns via [onDone] with no UI shown at all. Only when
-/// player names would overflow the fixed-size storage pool does
+/// The player-name check is cheap and silent — the vast majority of saves
+/// are under budget and this returns via [onDone] with no UI shown at all.
+/// Only when player names would overflow the fixed-size storage pool does
 /// [PlayerNameOverflowDialog] appear, offering dedup/truncation reduction
 /// options before the real commit happens.
 ///
-/// A pure LookupAndModify script (no Team= section) skips the check
-/// entirely — collectPlayerNamesFromText marks such [names] as
-/// [PlayerNames.bypassed], and this always goes straight to [onDone]
-/// regardless of [PlayerNames.requiredBytes], since that reflects the
-/// file's pre-existing names and has nothing to do with this operation.
+/// A pure LookupAndModify script (no Team= section) skips the player-name
+/// check entirely — collectEditsFromText marks such [names] as
+/// [PlayerNames.bypassed], and this always goes straight to the commit
+/// attempt regardless of [PlayerNames.requiredBytes], since that reflects
+/// the file's pre-existing names and has nothing to do with this operation.
 ///
-/// If the user cancels the dialog, [tool]'s GameSaveData is restored to its
-/// state from before this function ran (undoing the non-name attribute
-/// writes that PlayerNames.fromTool's collect pass already made) and
+/// The coach-string pool has no reduction UI yet (unlike player names,
+/// there's normally nothing to deduplicate or truncate there), so it's
+/// never pre-checked or dialog-gated the way player names are — a coach-
+/// string overflow is only discovered when [commitEditsAndApplyRest]
+/// actually attempts it, and surfaces to the caller as a failed [onDone]
+/// result to report as an error, the same way any other commit failure would.
+///
+/// If the user cancels the player-name dialog, [tool]'s GameSaveData is
+/// restored to its state from before this function ran (undoing every
+/// non-name/non-coach-string write the collect pass already made) and
 /// [onCancelled] is called instead of [onDone].
 void processTextWithNameCheck({
   required GamesaveTool tool,
   required String text,
-  required void Function(CommitResult result) onDone,
+  required void Function(EditCommitResult result) onDone,
   required void Function() onCancelled,
 }) {
-  final names = collectPlayerNamesFromText(tool, text);
+  final collected = collectEditsFromText(tool, text);
+  final names = collected.names;
 
   void finish() {
-    onDone(commitPlayerNamesAndApplyRest(tool, text, names));
+    onDone(commitEditsAndApplyRest(tool, text, collected));
   }
 
   if (names.bypassed || names.requiredBytes <= PlayerNames.budget) {
@@ -65,8 +77,7 @@ void processTextWithNameCheck({
     names: names,
     onProceed: finish,
     onCancel: () {
-      final snap = names.preCollectSnapshot;
-      if (snap != null) tool.GameSaveData!.setAll(0, snap);
+      tool.GameSaveData!.setAll(0, collected.preCollectSnapshot);
       onCancelled();
     },
   );

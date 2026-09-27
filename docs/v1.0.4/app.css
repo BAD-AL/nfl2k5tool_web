@@ -1847,6 +1847,13 @@ body {
   color: var(--color-text);
 }
 
+.options-row-description {
+  padding: 0 16px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-muted);
+}
+
 /* Toggle switch */
 .toggle-switch {
   position: relative;

@@ -22,6 +22,7 @@ class AppOptions {
   bool autoUpdatePhotos;
   bool autoUpdatePBP;
   bool autoFixSkinFromPhoto;
+  bool clearHistoricPlayerStats;
 
   AppOptions({
     this.showPlayers = true,
@@ -38,6 +39,7 @@ class AppOptions {
     this.autoUpdatePhotos = false,
     this.autoUpdatePBP = true,
     this.autoFixSkinFromPhoto = false,
+    this.clearHistoricPlayerStats = false,
   });
 
   static AppOptions load() {
@@ -59,6 +61,7 @@ class AppOptions {
       autoUpdatePhotos:      get('autoUpdatePhotos', false),
       autoUpdatePBP:         get('autoUpdatePBP', true),
       autoFixSkinFromPhoto:  get('autoFixSkinFromPhoto', false),
+      clearHistoricPlayerStats: get('clearHistoricPlayerStats', false),
     );
   }
 
@@ -78,5 +81,6 @@ class AppOptions {
     s.setItem('autoUpdatePhotos',      autoUpdatePhotos.toString());
     s.setItem('autoUpdatePBP',         autoUpdatePBP.toString());
     s.setItem('autoFixSkinFromPhoto',  autoFixSkinFromPhoto.toString());
+    s.setItem('clearHistoricPlayerStats', clearHistoricPlayerStats.toString());
   }
 }

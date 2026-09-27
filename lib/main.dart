@@ -11,6 +11,7 @@ import 'widgets/top_bar.dart';
 import 'widgets/nav_rail.dart';
 import 'widgets/status_bar.dart';
 import 'widgets/player_name_overflow_dialog.dart';
+import 'widgets/save_health_dialog.dart';
 import 'screens/player_editor_screen.dart';
 import 'screens/schedule_editor_screen.dart';
 import 'screens/text_editor_screen.dart';
@@ -230,6 +231,11 @@ void _loadBytes(Uint8List bytes, String name) {
     appState.refreshCounts();
     appState.notify();
     statusBar.showMessage('Loaded: $name');
+
+    final health = checkSaveFileHealth(tool);
+    if (health.hasAnyIssue) {
+      SaveHealthDialog().open(health);
+    }
   } catch (e) {
     statusBar.showMessage('Error loading file: $e');
   }
