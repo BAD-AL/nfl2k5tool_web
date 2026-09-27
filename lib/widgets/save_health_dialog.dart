@@ -74,6 +74,13 @@ class SaveHealthDialog {
       issues.add('Some players share the same name-storage location, which can '
           'cause names to be overwritten unexpectedly when edited.');
     }
+    if (health.teamsWithInvalidPlaybooks.isNotEmpty) {
+      final teams = health.teamsWithInvalidPlaybooks.join(', ');
+      issues.add('<b>$teams</b> ${health.teamsWithInvalidPlaybooks.length == 1 ? "has" : "have"} '
+          'an invalid playbook assigned. Reassign '
+          '${health.teamsWithInvalidPlaybooks.length == 1 ? "it" : "them"} to a valid '
+          'playbook via the Team Data editor or Text Editor before exporting.');
+    }
 
     overlay.innerHTML = '''
 <div class="dialog" style="max-width:480px;width:90%;">

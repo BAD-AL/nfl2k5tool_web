@@ -333,7 +333,6 @@ ${_buildTabBarHtml()}
 
   // Info fields are capped at 50 characters each by the game engine.
   static const _kInfoMaxLength = 50;
-  static const _kInfoKeys = {'Info1', 'Info2', 'Info3'};
 
   String _buildStringsTabHtml(CoachRow c) {
     final buf = StringBuffer();
@@ -342,10 +341,12 @@ ${_buildTabBarHtml()}
       if (!_headers.contains(key)) continue;
       final val      = c.fields[key] ?? '';
       final label    = _kStringLabels[key] ?? key;
-      final maxAttr  = _kInfoKeys.contains(key) ? ' maxlength="$_kInfoMaxLength"' : '';
-      final limitHint = _kInfoKeys.contains(key)
-          ? ' <span class="ces-char-hint" style="float:right;font-weight:400;">${val.length}/$_kInfoMaxLength</span>'
-          : '';
+      // All five string fields (not just Info1-3) share the same real
+      // CoachStrings.maxFieldChars = 50 cap, so all five get the same
+      // maxlength/live-counter treatment.
+      final maxAttr  = ' maxlength="$_kInfoMaxLength"';
+      final limitHint =
+          ' <span class="ces-char-hint" style="float:right;font-weight:400;">${val.length}/$_kInfoMaxLength</span>';
       buf.write('''
 <div class="attr-card text-field" data-key="${_esc(key)}" style="width:100%;">
   <div class="attr-card-label">${_esc(label)}$limitHint</div>
@@ -454,8 +455,8 @@ ${_buildTabBarHtml()}
         _coaches[_selectedIdx].fields[key] = value;
       }
 
-      // Live character counter for Info fields
-      if (_kInfoKeys.contains(key)) {
+      // Live character counter -- all five string fields share the cap.
+      {
         final card = (grid.querySelector('.attr-card[data-key="${_esc(key)}"]') as HTMLElement?);
         final hint = card?.querySelector('.ces-char-hint') as HTMLElement?;
         if (hint != null) hint.textContent = '${value.length}/$_kInfoMaxLength';

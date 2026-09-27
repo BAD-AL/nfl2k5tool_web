@@ -160,6 +160,15 @@ class TeamDataEditorScreen {
   int _lastTextHash  = 0;
   int _selectedIdx   = -1;
 
+  /// Each fixed-length field's max character count, captured once when a
+  /// team is selected -- not re-derived from `_teams[_selectedIdx]` on
+  /// every keystroke, since that would ratchet the limit down if a field
+  /// is shrunk then grown back within the same session (the real
+  /// engine-side check always measures against the true, still-uncommitted
+  /// original binary, so the live UI needs to match that, not the
+  /// in-progress text).
+  Map<String, int> _maxFieldLen = {};
+
   TeamDataEditorScreen(AppState appState)
       : _appState = appState,
         _container = document.getElementById('screen-teamData') as HTMLElement;
@@ -436,12 +445,19 @@ $dropdowns
 </div>''';
   }
 
-  String _textField(String key, String label, String value) => '''
+  String _textField(String key, String label, String value) {
+    final max = _maxFieldLen[key];
+    final maxAttr = max != null ? ' maxlength="$max"' : '';
+    final hint = max != null
+        ? ' <span class="tde-char-hint" style="float:right;font-weight:400;">${value.length}/$max</span>'
+        : '';
+    return '''
 <div class="attr-card text-field" data-key="${_esc(key)}">
-  <div class="attr-card-label">${_esc(label)}</div>
+  <div class="attr-card-label">${_esc(label)}$hint</div>
   <input type="text" class="pes-text-input tde-text-input" data-key="${_esc(key)}"
-    value="${_esc(value)}">
+    value="${_esc(value)}"$maxAttr>
 </div>''';
+  }
 
   String _buildLogoDropdown(String curLogoStr) {
     final curVal   = int.tryParse(curLogoStr) ?? 0;
@@ -546,8 +562,25 @@ $dropdowns
     final detail = _container.querySelector('#tde-detail-panel') as HTMLElement?;
     if (detail == null) return;
 
-    // Text input blur
-    detail.addEventListener('blur', (Event e) {
+    // Live character counter for fixed-length text fields.
+    detail.addEventListener('input', (Event e) {
+      final target = e.target as HTMLElement?;
+      if (target == null || !target.classList.contains('tde-text-input')) return;
+      final input = target as HTMLInputElement;
+      final key = input.dataset['key'];
+      final max = _maxFieldLen[key];
+      if (max == null) return;
+      final card = detail.querySelector('.attr-card[data-key="${_esc(key)}"]') as HTMLElement?;
+      final hint = card?.querySelector('.tde-char-hint') as HTMLElement?;
+      if (hint != null) hint.textContent = '${input.value.length}/$max';
+    }.toJS);
+
+    // 'focusout' (unlike 'blur') bubbles, so this delegates correctly from
+    // the detail panel -- see the identical fix and note in
+    // coach_editor_screen.dart / player_editor_screen.dart. A plain 'blur'
+    // listener here would never fire for a descendant input's blur at all,
+    // silently discarding every typed edit.
+    detail.addEventListener('focusout', (Event e) {
       final target = e.target as HTMLElement?;
       if (target == null || !target.classList.contains('tde-text-input')) return;
       final key = (target as HTMLInputElement).dataset['key'];
@@ -602,6 +635,13 @@ $dropdowns
     }
     _container.querySelector('.player-row[data-idx="$idx"]')?.classList.add('selected');
     _selectedIdx = idx;
+    final t = _teams[idx];
+    _maxFieldLen = {
+      'Nickname': t.nickname.length,
+      'Abbrev': t.abbrev.length,
+      'City': t.city.length,
+      'AbbrAlt': t.abbrAlt.length,
+    };
     _rebuildDetail();
   }
 
