@@ -23,10 +23,31 @@
     </div>
 
     <div class="top-bar-actions">
-      <button id="btn-open" class="btn btn-outlined" title="Open a gamesave file">
-        <span class="material-symbols-outlined">folder_open</span>
-        <span>Open File</span>
-      </button>
+      <div class="open-file-group" style="position:relative;display:flex;">
+        <button id="btn-open" class="btn btn-outlined" title="Open a gamesave file"
+          style="border-top-right-radius:0;border-bottom-right-radius:0;border-right:none;">
+          <span class="material-symbols-outlined">folder_open</span>
+          <span>Open File</span>
+        </button>
+        <button id="btn-open-menu" class="btn btn-outlined btn-icon" title="More open options"
+          style="border-top-left-radius:0;border-bottom-left-radius:0;">
+          <span class="material-symbols-outlined">expand_more</span>
+        </button>
+        <div id="open-menu-panel" class="img-popover-panel" style="display:none;">
+          <div class="img-popover-row" id="open-menu-open">
+            <span class="material-symbols-outlined" style="font-size:18px;">folder_open</span>
+            Open File...
+          </div>
+          <div class="img-popover-row" id="open-menu-default-roster">
+            <span class="material-symbols-outlined" style="font-size:18px;">restart_alt</span>
+            Load Default Roster
+          </div>
+          <div class="img-popover-row" id="open-menu-default-franchise">
+            <span class="material-symbols-outlined" style="font-size:18px;">restart_alt</span>
+            Load Default Franchise
+          </div>
+        </div>
+      </div>
       <!--button id="btn-save" class="btn btn-filled" disabled title="Save (not available in browser)">
         <span class="material-symbols-outlined">save</span>
         <span>Save</span>

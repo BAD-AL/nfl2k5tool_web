@@ -17,6 +17,11 @@ class TopBar {
   final AppState appState;
 
   final HTMLButtonElement _btnOpen;
+  final HTMLButtonElement _btnOpenMenu;
+  final HTMLElement _openMenuPanel;
+  final HTMLElement _openMenuOpen;
+  final HTMLElement _openMenuDefaultRoster;
+  final HTMLElement _openMenuDefaultFranchise;
   final HTMLButtonElement _btnExport;
   final HTMLElement _fileBadge;
   final HTMLElement _fileBadgeType;
@@ -28,6 +33,16 @@ class TopBar {
 
   TopBar(this.appState)
       : _btnOpen = document.getElementById('btn-open') as HTMLButtonElement,
+        _btnOpenMenu =
+            document.getElementById('btn-open-menu') as HTMLButtonElement,
+        _openMenuPanel =
+            document.getElementById('open-menu-panel') as HTMLElement,
+        _openMenuOpen =
+            document.getElementById('open-menu-open') as HTMLElement,
+        _openMenuDefaultRoster =
+            document.getElementById('open-menu-default-roster') as HTMLElement,
+        _openMenuDefaultFranchise = document
+            .getElementById('open-menu-default-franchise') as HTMLElement,
         _btnExport =
             document.getElementById('btn-export') as HTMLButtonElement,
         _fileBadge = document.getElementById('file-badge') as HTMLElement,
@@ -45,12 +60,48 @@ class TopBar {
     required void Function() onOpen,
     required void Function() onExport,
     required void Function() onThemeToggle,
+    required void Function() onLoadDefaultRoster,
+    required void Function() onLoadDefaultFranchise,
   }) {
     _btnOpen.onClick.listen((_) => onOpen());
     _btnExport.onClick.listen((_) => onExport());
     _btnTheme.onClick.listen((_) => onThemeToggle());
     _btnOtherLinks.addEventListener('click', (Event _) { _showLinksModal(); }.toJS);
     _btnHelp.addEventListener('click', (Event _) { _showHelpModal(); }.toJS);
+
+    _btnOpenMenu.addEventListener('click', (Event e) {
+      e.stopPropagation();
+      final isOpen = _openMenuPanel.style.display != 'none';
+      _openMenuPanel.style.display = isOpen ? 'none' : 'block';
+    }.toJS);
+    _openMenuOpen.addEventListener('click', (Event _) {
+      _openMenuPanel.style.display = 'none';
+      onOpen();
+    }.toJS);
+    _openMenuDefaultRoster.addEventListener('click', (Event _) {
+      _openMenuPanel.style.display = 'none';
+      onLoadDefaultRoster();
+    }.toJS);
+    _openMenuDefaultFranchise.addEventListener('click', (Event _) {
+      _openMenuPanel.style.display = 'none';
+      onLoadDefaultFranchise();
+    }.toJS);
+    // Close on click-away via a document-level 'mousedown' that checks
+    // containment -- NOT 'focusout'. A mousedown on one of the panel's own
+    // rows shifts focus away from the chevron trigger *before* the row's
+    // 'click' fires, so a 'focusout' listener here would hide the panel
+    // (display:none) between mousedown and click, meaning the click event
+    // never lands on the row at all (it hit-tests against whatever is
+    // newly underneath). Checking containment on 'mousedown' instead lets
+    // outside clicks close the panel while clicks on its own rows still
+    // reach their 'click' handlers normally.
+    document.addEventListener('mousedown', (Event e) {
+      final target = e.target;
+      final group = _btnOpenMenu.parentElement;
+      if (target is Node && group != null && !group.contains(target)) {
+        _openMenuPanel.style.display = 'none';
+      }
+    }.toJS);
   }
 
   void _showLinksModal() {

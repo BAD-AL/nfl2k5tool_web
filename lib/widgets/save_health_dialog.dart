@@ -93,9 +93,9 @@ class SaveHealthDialog {
       ${issues.map((i) => '<li style="margin-bottom:6px;">$i</li>').join()}
     </ul>
     These need to be resolved before edits to the affected data can be saved.
-    A common fix: load a clean, default Roster or Franchise file, copy this
-    file's text from the Text Editor, paste it over the clean file's text,
-    then export from there.
+    A common fix: use Open File's <b>Load Default Roster</b> or
+    <b>Load Default Franchise</b> option, copy this file's text from the Text
+    Editor, paste it over the clean file's text, then export from there.
   </div>
   <div class="dialog-footer">
     <button class="btn btn-filled" id="shd-ok">OK</button>

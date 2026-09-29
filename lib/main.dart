@@ -60,6 +60,10 @@ void main() {
     onOpen: _openFile,
     onExport: _showExportDialog,
     onThemeToggle: _toggleTheme,
+    onLoadDefaultRoster: () =>
+        _loadDefaultFile('assets/DefaultRoster.zip', 'DefaultRoster.zip'),
+    onLoadDefaultFranchise: () =>
+        _loadDefaultFile('assets/DefaultFran.zip', 'DefaultFran.zip'),
   );
   navRail.wire(onNav: (section) {
     appState.activeSection = section;
@@ -202,6 +206,25 @@ void _readSelectedFile(HTMLInputElement input) {
     _loadBytes(bytes, file.name);
   }).catchError((Object e) {
     statusBar.showMessage('Error reading file: $e');
+  });
+}
+
+/// Fetches a bundled default save file (e.g. `assets/DefaultRoster.zip`)
+/// and loads it through the normal [_loadBytes] pipeline.
+void _loadDefaultFile(String assetPath, String displayName) {
+  window.fetch(assetPath.toJS).toDart.then((response) {
+    if (!response.ok) {
+      statusBar.showMessage(
+          'Error loading $displayName: HTTP ${response.status}');
+      return;
+    }
+    response.arrayBuffer().toDart.then((buffer) {
+      _loadBytes(Uint8List.view(buffer.toDart), displayName);
+    }).catchError((Object e) {
+      statusBar.showMessage('Error loading $displayName: $e');
+    });
+  }).catchError((Object e) {
+    statusBar.showMessage('Error loading $displayName: $e');
   });
 }
 
