@@ -374,8 +374,10 @@ class TeamDataEditorScreen {
   // ─── Special teams section ────────────────────────────────────────────────
 
   static const _kStRoleLabels = [
+    ('Holder', 'Holder (FG/PAT)'),
     ('KR1', 'Kick Returner 1'),
     ('KR2', 'Kick Returner 2'),
+    ('PK',  'Placekicker'),
     ('PR',  'Punt Returner'),
     ('LS',  'Long Snapper'),
   ];
@@ -437,8 +439,25 @@ $disabledCards
   </div>''';
     }).join('\n');
 
+    final autoUpdateNote = _appState.options.autoUpdateDepthCharts
+        ? '''
+  <div style="font-size:11px;color:var(--color-muted);margin-bottom:8px;display:flex;align-items:flex-start;gap:4px;">
+    <span class="material-symbols-outlined" style="font-size:14px;line-height:1.4;">warning</span>
+    <span><b>Auto Update Depth Charts</b> is ON — Holder, KR1, KR2, PR, and LS will be
+    reset to its own picks (punter as Holder; fastest returners; a center at LS)
+    every time you Apply/Export, overriding any choices made here. <b>PK is not
+    affected.</b> Turn off <b>Auto Update Depth Charts</b> in Options to keep your
+    own picks.</span>
+  </div>'''
+        : '''
+  <div style="font-size:11px;color:var(--color-muted);font-style:italic;margin-bottom:8px;">
+    <b>Auto Update Depth Charts</b> is off, so your picks here are kept as-is on
+    Apply/Export.
+  </div>''';
+
     return '''
 $sectionHeader
+$autoUpdateNote
   <div style="display:flex;flex-wrap:wrap;gap:8px;">
 $dropdowns
   </div>

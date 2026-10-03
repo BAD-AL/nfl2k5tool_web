@@ -176,14 +176,13 @@ List<TeamBlock> parseTeamBlocksForDisplay(String text) {
     }
 
     // Player data row — only inside a team block, with headers available.
-    // KR1/KR2/PR/LS are special-teams depth-chart lines (e.g. 'KR1,WR6'),
-    // not players — they're edited via the Team Data screen's Special
-    // Teams section instead (see parseSpecialTeamsForTeam).
+    // Holder/KR1/KR2/PK/PR/LS are special-teams depth-chart lines (e.g.
+    // 'KR1,WR6'), not players — they're edited via the Team Data screen's
+    // Special Teams section instead (see parseSpecialTeamsForTeam).
     if (currentTeam != null && headers.isNotEmpty && trimmed.isNotEmpty &&
         !trimmed.startsWith('//') && !trimmed.startsWith('SET(') &&
         !trimmed.startsWith('YEAR=') && !trimmed.startsWith('WEEK') &&
-        !trimmed.startsWith('KR1,') && !trimmed.startsWith('KR2,') &&
-        !trimmed.startsWith('PR,') && !trimmed.startsWith('LS,')) {
+        !kStRoleNames.any((r) => trimmed.startsWith('$r,'))) {
       final vals = splitCsv(trimmed, delim);
       final fieldMap = <String, String>{};
       for (int j = 0; j < headers.length && j < vals.length; j++) {
@@ -336,7 +335,15 @@ class TeamDataRow {
 
 // ─── Special teams parse ──────────────────────────────────────────────────────
 
-const _kStRoles = {'KR1', 'KR2', 'PR', 'LS'};
+// Canonical casing matters: these are written back verbatim into the text
+// (see _writeStSlot in team_data_editor_screen.dart) and nfl2k5tool_dart's
+// InputParser.ProcessLine dispatches on an exact-case prefix match (e.g.
+// 'Holder,', not 'HOLDER,') -- unlike KR1/KR2/PK/PR/LS, which are already
+// all-uppercase so this never mattered for them before.
+const List<String> kStRoleNames = ['Holder', 'KR1', 'KR2', 'PK', 'PR', 'LS'];
+final Map<String, String> _kStRoleByUpper = {
+  for (final r in kStRoleNames) r.toUpperCase(): r,
+};
 
 /// A single special-teams slot read from the text.
 class StSlot {
@@ -399,15 +406,16 @@ class StRosterOption {
 
     final fields     = splitCsv(trimmed, delim);
     final firstField = fields.isNotEmpty ? fields[0].trim().toUpperCase() : '';
+    final canonicalRole = _kStRoleByUpper[firstField];
 
-    if (_kStRoles.contains(firstField) && fields.length >= 2) {
+    if (canonicalRole != null && fields.length >= 2) {
       final value = fields[1].trim(); // e.g. 'WR6' (trim removes any \r)
-      slots[firstField] = StSlot(role: firstField, value: value, lineIndex: i);
+      slots[canonicalRole] = StSlot(role: canonicalRole, value: value, lineIndex: i);
     } else if (posIdx >= 0 && fields.length > posIdx) {
       final pos   = fields[posIdx].trim();
       final fname = fnameIdx >= 0 && fields.length > fnameIdx ? fields[fnameIdx].trim() : '';
       final lname = lnameIdx >= 0 && fields.length > lnameIdx ? fields[lnameIdx].trim() : '';
-      if (pos.isNotEmpty && !_kStRoles.contains(pos.toUpperCase())) {
+      if (pos.isNotEmpty && !_kStRoleByUpper.containsKey(pos.toUpperCase())) {
         final depth   = (depthCounts[pos] ?? 0) + 1;
         depthCounts[pos] = depth;
         final name = lname.isNotEmpty ? '$lname, $fname' : fname;
@@ -487,8 +495,7 @@ String swapLines(String text, int lineIndexA, int lineIndexB) {
     if (inTeam && hasSeenHeader && t.isNotEmpty &&
         !t.startsWith('//') && !t.startsWith('SET(') &&
         !t.startsWith('WEEK') &&
-        !t.startsWith('KR1,') && !t.startsWith('KR2,') &&
-        !t.startsWith('PR,') && !t.startsWith('LS,')) {
+        !kStRoleNames.any((r) => t.startsWith('$r,'))) {
       players++;
     }
   }
